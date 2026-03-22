@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNabu } from '@/core/context/NabuContext'
 import NavBar from '@/components/atoms/NavBar'
 import { lookupWord } from '@/core/lib/miniDict'
+import { categorizeWord } from '@/core/lib/categorize'
+import { isRTL } from '@/core/lib/rtl'
+import { soundWordLearned, soundXPGained } from '@/core/lib/sounds'
 
 /* ============================================================
    HELPERS
@@ -41,6 +44,9 @@ export default function TextReader() {
   const [customTranslation, setCustomTranslation] = useState('')
   const [addedWords, setAddedWords] = useState<Set<string>>(new Set())
   const [flashWord, setFlashWord] = useState<string | null>(null)
+  const [wordsAddedCount, setWordsAddedCount] = useState(0)
+  // starFloats state removed — reserved for future particle effects
+  const targetDir = isRTL(targetLang) ? 'rtl' as const : 'ltr' as const
 
   // Known words set for quick lookup
   const knownSet = useMemo(() => new Set(words.map(w => w.lemma.toLowerCase())), [words])
@@ -76,6 +82,8 @@ export default function TextReader() {
   const handleAddWord = useCallback(() => {
     if (!selectedToken || !customTranslation.trim()) return
 
+    const planet = categorizeWord(selectedToken.raw, customTranslation.trim())
+
     addWord({
       lemma: selectedToken.raw,
       translation: customTranslation.trim(),
@@ -89,13 +97,16 @@ export default function TextReader() {
       interval: 1,
       nextReview: new Date(Date.now() + 86400000).toISOString(),
       orbit: 3,
-      planet: 'daily',
+      planet,
       sources: ['text-reader'],
     })
 
     addXP(5)
     setAddedWords(prev => new Set(prev).add(selectedToken.word))
     setFlashWord(selectedToken.word)
+    setWordsAddedCount(c => c + 1)
+    soundWordLearned()
+    setTimeout(() => soundXPGained(), 300)
     setTimeout(() => setFlashWord(null), 1200)
     setSelectedToken(null)
   }, [selectedToken, customTranslation, nativeLang, targetLang, addWord, addXP])
@@ -126,7 +137,7 @@ export default function TextReader() {
           interval: 1,
           nextReview: new Date(Date.now() + 86400000).toISOString(),
           orbit: 3,
-          planet: 'daily',
+          planet: categorizeWord(raw, dict),
           sources: ['text-reader'],
         })
         setAddedWords(prev => new Set(prev).add(word))
@@ -165,19 +176,22 @@ export default function TextReader() {
           </p>
 
           <textarea
+            dir="auto"
             value={inputText}
             onChange={e => setInputText(e.target.value)}
             placeholder="Paste text here..."
             style={{
               flex: 1, minHeight: 200,
               background: 'rgba(255,255,255,0.03)',
-              border: '1px solid var(--border)',
               borderRadius: 12, padding: 16,
-              fontSize: 15, lineHeight: 1.6,
+              fontSize: 16, lineHeight: 1.6,
               color: 'var(--text)',
               resize: 'vertical',
               outline: 'none',
               fontFamily: 'inherit',
+              borderWidth: 1,
+              borderStyle: 'solid',
+              borderImage: 'linear-gradient(to bottom, rgba(212,160,88,0.5), rgba(212,160,88,0.15), rgba(212,160,88,0.5)) 1',
             }}
           />
 
@@ -229,6 +243,22 @@ export default function TextReader() {
           <StatChip label="Known" value={stats.known} color="var(--life)" />
           <StatChip label="Unknown" value={stats.unknown} color="var(--ember)" />
           <StatChip label="Comprehension" value={`${stats.pct}%`} color="var(--star)" />
+          {wordsAddedCount > 0 && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                background: 'rgba(255,215,0,0.12)',
+                border: '1px solid rgba(255,215,0,0.3)',
+                borderRadius: 12, padding: '2px 8px',
+              }}
+            >
+              <span style={{ fontSize: 11 }}>{'\u2B50'}</span>
+              <span style={{ fontWeight: 700, color: 'var(--star)', fontSize: 12 }}>{wordsAddedCount}</span>
+              <span style={{ fontSize: 10, color: 'var(--text-dim)' }}>added</span>
+            </motion.div>
+          )}
         </div>
 
         <motion.button
@@ -248,11 +278,12 @@ export default function TextReader() {
       </div>
 
       {/* Text display */}
-      <div style={{
+      <div dir={targetDir} style={{
         flex: 1, overflowY: 'auto',
         padding: '20px 16px',
         lineHeight: 2,
         fontSize: 17,
+        textAlign: targetDir === 'rtl' ? 'right' : 'left',
       }}>
         {tokens.map((token, i) => {
           if (token.isPunct) {
@@ -266,14 +297,16 @@ export default function TextReader() {
             <span key={i} style={{ position: 'relative', display: 'inline' }}>
               <motion.span
                 onClick={() => handleWordClick(token)}
+                className={!isKnown && !isFlashing ? 'pulse-underline' : undefined}
                 style={{
                   cursor: 'pointer',
                   color: isKnown ? 'var(--text)' : 'var(--text)',
-                  borderBottom: isKnown ? 'none' : '1.5px solid var(--ember)',
+                  borderBottom: isKnown ? 'none' : isFlashing ? 'none' : undefined,
                   padding: '0 1px',
                   borderRadius: 2,
                   transition: 'all 0.15s',
-                  background: isFlashing ? 'rgba(255,215,0,0.2)' : 'transparent',
+                  background: isFlashing ? 'rgba(255,215,0,0.25)' : 'transparent',
+                  boxShadow: isFlashing ? '0 0 12px rgba(255,215,0,0.3)' : 'none',
                 }}
                 whileHover={{
                   background: isKnown ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
@@ -282,23 +315,76 @@ export default function TextReader() {
                 {token.raw}
               </motion.span>
 
-              {/* Flash animation */}
+              {/* Starburst particle effect on word added */}
               <AnimatePresence>
                 {isFlashing && (
-                  <motion.span
-                    initial={{ opacity: 1, y: 0 }}
-                    animate={{ opacity: 0, y: -24 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 1 }}
-                    style={{
-                      position: 'absolute', top: -8, right: -4,
-                      color: 'var(--star)', fontWeight: 700, fontSize: 11,
-                      pointerEvents: 'none',
-                      filter: 'drop-shadow(0 0 4px var(--star))',
-                    }}
-                  >
-                    +5
-                  </motion.span>
+                  <>
+                    {/* XP float */}
+                    <motion.span
+                      initial={{ opacity: 1, y: 0, scale: 1 }}
+                      animate={{ opacity: 0, y: -28, scale: 1.3 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1 }}
+                      style={{
+                        position: 'absolute', top: -8, right: -6,
+                        color: 'var(--star)', fontWeight: 700, fontSize: 12,
+                        pointerEvents: 'none',
+                        filter: 'drop-shadow(0 0 6px var(--star))',
+                      }}
+                    >
+                      +5
+                    </motion.span>
+                    {/* Central star burst */}
+                    <motion.span
+                      initial={{ opacity: 1, scale: 0.5 }}
+                      animate={{ opacity: 0, scale: 2.5 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      style={{
+                        position: 'absolute', top: '50%', left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: 20, height: 20, borderRadius: '50%',
+                        background: 'radial-gradient(circle, rgba(255,215,0,0.6), transparent)',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    {/* Particle rays */}
+                    {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+                      <motion.div
+                        key={angle}
+                        initial={{ opacity: 0.8, scale: 0 }}
+                        animate={{ opacity: 0, scale: 1.5 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6, ease: 'easeOut', delay: 0.05 }}
+                        style={{
+                          position: 'absolute',
+                          top: '50%', left: '50%',
+                          width: 3, height: 3,
+                          borderRadius: '50%',
+                          background: 'var(--star)',
+                          pointerEvents: 'none',
+                          transform: `translate(-50%, -50%) rotate(${angle}deg) translateY(-12px)`,
+                          boxShadow: '0 0 4px var(--star)',
+                        }}
+                      />
+                    ))}
+                    {/* Star emoji float */}
+                    <motion.span
+                      initial={{ opacity: 1, y: 0, scale: 1 }}
+                      animate={{ opacity: 0, y: -36, scale: 1.8 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 1.2, ease: 'easeOut' }}
+                      style={{
+                        position: 'absolute', top: -14, left: '50%',
+                        transform: 'translateX(-50%)',
+                        fontSize: 16,
+                        pointerEvents: 'none',
+                        filter: 'drop-shadow(0 0 8px var(--star))',
+                      }}
+                    >
+                      {'\u2B50'}
+                    </motion.span>
+                  </>
                 )}
               </AnimatePresence>
             </span>

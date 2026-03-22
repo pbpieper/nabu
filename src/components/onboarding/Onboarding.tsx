@@ -2,19 +2,20 @@ import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNabu } from '@/core/context/NabuContext'
 import type { UserProfile } from '@/core/types'
+import { getStarterWords } from '@/core/lib/starterWords'
 
 const LANGUAGES = [
-  { code: 'es', name: 'Spanish', native: 'Espanol', symbol: '\u2726' },
-  { code: 'fr', name: 'French', native: 'Francais', symbol: '\u2727' },
+  { code: 'es', name: 'Spanish', native: 'Espa\u00f1ol', symbol: '\u2726' },
+  { code: 'fr', name: 'French', native: 'Fran\u00e7ais', symbol: '\u2727' },
   { code: 'de', name: 'German', native: 'Deutsch', symbol: '\u2736' },
   { code: 'ar', name: 'Arabic', native: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', symbol: '\u2734' },
   { code: 'ja', name: 'Japanese', native: '\u65E5\u672C\u8A9E', symbol: '\u2733' },
   { code: 'ko', name: 'Korean', native: '\uD55C\uAD6D\uC5B4', symbol: '\u2721' },
   { code: 'zh', name: 'Chinese', native: '\u4E2D\u6587', symbol: '\u2742' },
   { code: 'it', name: 'Italian', native: 'Italiano', symbol: '\u2735' },
-  { code: 'pt', name: 'Portuguese', native: 'Portugues', symbol: '\u2737' },
+  { code: 'pt', name: 'Portuguese', native: 'Portugu\u00eas', symbol: '\u2737' },
   { code: 'ru', name: 'Russian', native: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', symbol: '\u2738' },
-  { code: 'tr', name: 'Turkish', native: 'Turkce', symbol: '\u2739' },
+  { code: 'tr', name: 'Turkish', native: 'T\u00fcrk\u00e7e', symbol: '\u2739' },
   { code: 'nl', name: 'Dutch', native: 'Nederlands', symbol: '\u273A' },
 ] as const
 
@@ -74,7 +75,31 @@ export default function Onboarding() {
         sources: ['onboarding'],
       })
     }
-    addXP(10)
+
+    // Add 10 starter words so the user has material to work with immediately
+    const starters = getStarterWords(targetLang)
+    for (const sw of starters) {
+      addWord({
+        lemma: sw.lemma,
+        translation: sw.translation,
+        langFrom: nativeLang,
+        langTo: targetLang,
+        pronunciation: sw.pronunciation,
+        status: 'seen',
+        encounters: 1,
+        lastSeen: new Date().toISOString(),
+        stability: 0.4,
+        difficulty: 0.3,
+        interval: 1,
+        nextReview: new Date(Date.now() + 86400000).toISOString(),
+        orbit: sw.orbit,
+        planet: sw.planet,
+        sources: ['onboarding'],
+      })
+    }
+
+    // Award 40 XP total (10 for first word + 3 per starter word) — close to Galaxy unlock
+    addXP(10 + starters.length * 3)
     setTimeout(() => setStep('towerRise'), 1200)
   }, [targetLang, nativeLang, wordLearned, addWord, addXP])
 
@@ -105,25 +130,29 @@ export default function Onboarding() {
       overflow: 'hidden',
       position: 'relative',
     }}>
-      {/* Starfield background */}
+      {/* Starfield background — enhanced twinkling */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-        {Array.from({ length: 40 }).map((_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              width: Math.random() * 2 + 1,
-              height: Math.random() * 2 + 1,
-              background: 'white',
-              borderRadius: '50%',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              opacity: Math.random() * 0.6 + 0.1,
-              animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 3}s`,
-            }}
-          />
-        ))}
+        {Array.from({ length: 60 }).map((_, i) => {
+          const isBright = i < 8
+          return (
+            <div
+              key={i}
+              style={{
+                position: 'absolute',
+                width: isBright ? Math.random() * 3 + 2 : Math.random() * 2 + 0.5,
+                height: isBright ? Math.random() * 3 + 2 : Math.random() * 2 + 0.5,
+                background: isBright ? 'rgba(255,215,0,0.8)' : 'white',
+                borderRadius: '50%',
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                opacity: Math.random() * 0.6 + 0.1,
+                animation: `${isBright ? 'twinkleBright' : 'twinkle'} ${Math.random() * 3 + 2}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 4}s`,
+                boxShadow: isBright ? '0 0 6px rgba(255,215,0,0.4)' : 'none',
+              }}
+            />
+          )
+        })}
       </div>
 
       <AnimatePresence mode="wait">
@@ -259,15 +288,43 @@ function WelcomeStep({ onSelect, selected }: {
               {lang.symbol}
             </span>
             <span style={{
-              fontSize: 12,
+              fontSize: 13,
               color: selected === lang.code ? 'var(--text)' : 'var(--text-muted)',
               fontWeight: selected === lang.code ? 600 : 400,
+              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
             }}>
               {lang.name}
+            </span>
+            <span style={{
+              fontSize: 10,
+              color: selected === lang.code ? 'var(--star)' : 'var(--text-dim)',
+              opacity: 0.8,
+            }}>
+              {lang.native}
             </span>
           </motion.button>
         ))}
       </motion.div>
+
+      {/* Gentle hint for young learners */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.7, 0.4, 0.7] }}
+        transition={{ delay: 3, duration: 3, repeat: Infinity }}
+        style={{
+          color: 'var(--text-dim)', fontSize: 13, marginTop: 24,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}
+      >
+        <motion.span
+          animate={{ y: [0, -3, 0] }}
+          transition={{ duration: 1.2, repeat: Infinity }}
+          style={{ fontSize: 16 }}
+        >
+          {'\u261D\uFE0F'}
+        </motion.span>
+        Tap a language to pick it!
+      </motion.p>
     </motion.div>
   )
 }
@@ -351,11 +408,19 @@ function NativeStep({ onSelect, selected, targetLang }: {
               {lang.symbol}
             </span>
             <span style={{
-              fontSize: 12,
+              fontSize: 13,
               color: selected === lang.code ? 'var(--text)' : 'var(--text-muted)',
               fontWeight: selected === lang.code ? 600 : 400,
+              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
             }}>
               {lang.name}
+            </span>
+            <span style={{
+              fontSize: 10,
+              color: selected === lang.code ? 'var(--cosmos)' : 'var(--text-dim)',
+              opacity: 0.8,
+            }}>
+              {lang.native}
             </span>
           </motion.button>
         ))}
@@ -487,26 +552,27 @@ function TowerRiseStep({ onFinish }: { onFinish: () => void }) {
         Your tower begins here.
       </motion.p>
 
-      {/* Animated tower foundation */}
+      {/* Animated tower foundation — bouncy drops */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, marginBottom: 32 }}>
         {/* Top ornament */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.5, duration: 0.6 }}
+          initial={{ opacity: 0, y: -20, scale: 0 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 1.8, duration: 0.5, type: 'spring', stiffness: 200, damping: 12 }}
           style={{
             width: 8,
             height: 24,
             background: 'linear-gradient(to top, var(--star), transparent)',
             borderRadius: '4px 4px 0 0',
             marginBottom: 2,
+            filter: 'drop-shadow(0 0 6px var(--star))',
           }}
         />
-        {/* Tower block 3 */}
+        {/* Tower block 3 — bounces in */}
         <motion.div
-          initial={{ scaleY: 0, opacity: 0 }}
-          animate={{ scaleY: 1, opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.4 }}
+          initial={{ scaleY: 0, opacity: 0, y: -20 }}
+          animate={{ scaleY: 1, opacity: 1, y: 0 }}
+          transition={{ delay: 1.2, duration: 0.5, type: 'spring', stiffness: 300, damping: 15 }}
           style={{
             width: 60,
             height: 28,
@@ -516,11 +582,11 @@ function TowerRiseStep({ onFinish }: { onFinish: () => void }) {
             transformOrigin: 'bottom',
           }}
         />
-        {/* Tower block 2 */}
+        {/* Tower block 2 — bounces in */}
         <motion.div
-          initial={{ scaleY: 0, opacity: 0 }}
-          animate={{ scaleY: 1, opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.4 }}
+          initial={{ scaleY: 0, opacity: 0, y: -15 }}
+          animate={{ scaleY: 1, opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5, type: 'spring', stiffness: 300, damping: 15 }}
           style={{
             width: 80,
             height: 32,
@@ -529,11 +595,11 @@ function TowerRiseStep({ onFinish }: { onFinish: () => void }) {
             transformOrigin: 'bottom',
           }}
         />
-        {/* Foundation */}
+        {/* Foundation — weighty bounce */}
         <motion.div
-          initial={{ scaleX: 0, opacity: 0 }}
-          animate={{ scaleX: 1, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
+          initial={{ scaleX: 0, opacity: 0, y: 10 }}
+          animate={{ scaleX: 1, opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6, type: 'spring', stiffness: 200, damping: 18 }}
           style={{
             width: 120,
             height: 40,
@@ -551,7 +617,7 @@ function TowerRiseStep({ onFinish }: { onFinish: () => void }) {
         transition={{ delay: 2, duration: 0.6 }}
         style={{ color: 'var(--text-dim)', fontSize: 14, marginBottom: 32 }}
       >
-        Every word you learn adds to your tower.
+        11 words learned. Your journey has begun.
       </motion.p>
 
       <motion.button

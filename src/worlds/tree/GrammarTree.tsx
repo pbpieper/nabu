@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNabu } from '@/core/context/NabuContext'
 import NavBar from '@/components/atoms/NavBar'
 import { getTreeForLanguage } from './grammarData'
+import { soundCorrect, soundWrong } from '@/core/lib/sounds'
 import type { GrammarTopic, Exercise } from './grammarData'
 
 /* ============================================================
@@ -181,6 +182,7 @@ export default function GrammarTree() {
             <div style={{
               display: 'flex', flexWrap: 'wrap',
               justifyContent: 'center', gap: 10,
+              position: 'relative',
             }}>
               {layer.topics.map(topic => {
                 const status = statuses[topic.id]
@@ -193,6 +195,7 @@ export default function GrammarTree() {
                     whileHover={status !== 'locked' ? { scale: 1.08, y: -2 } : undefined}
                     whileTap={status !== 'locked' ? { scale: 0.95 } : undefined}
                     onClick={() => status !== 'locked' && setSelectedTopic(topic)}
+                    className="ripple"
                     style={{
                       background: status === 'mastered' ? colors.bg
                         : status === 'started' ? `linear-gradient(135deg, ${colors.bg}, transparent)`
@@ -209,6 +212,7 @@ export default function GrammarTree() {
                       position: 'relative',
                       transition: 'all 0.2s',
                       boxShadow: status === 'mastered' ? `0 0 16px ${colors.glow}` : 'none',
+                      overflow: 'visible',
                     }}
                   >
                     <div style={{
@@ -228,10 +232,11 @@ export default function GrammarTree() {
                       {topic.name}
                     </span>
 
+                    {/* Available: gentle breathing pulse */}
                     {status === 'available' && (
                       <motion.div
-                        animate={{ opacity: [0.3, 0.8, 0.3] }}
-                        transition={{ duration: 2, repeat: Infinity }}
+                        animate={{ opacity: [0.2, 0.7, 0.2], scale: [0.98, 1.02, 0.98] }}
+                        transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                         style={{
                           position: 'absolute', inset: -2, borderRadius: 16,
                           border: `1px solid ${colors.border}`,
@@ -239,16 +244,54 @@ export default function GrammarTree() {
                         }}
                       />
                     )}
+
+                    {/* Mastered: tiny leaf particles */}
+                    {status === 'mastered' && (
+                      <div style={{ position: 'absolute', inset: -8, pointerEvents: 'none', overflow: 'visible' }}>
+                        {[0, 1, 2].map(i => (
+                          <div
+                            key={i}
+                            style={{
+                              position: 'absolute',
+                              left: `${30 + i * 20}%`,
+                              bottom: '60%',
+                              width: 3,
+                              height: 3,
+                              borderRadius: '50%',
+                              background: 'var(--life)',
+                              animation: `leafFloat ${2 + i * 0.5}s ease-in-out infinite`,
+                              animationDelay: `${i * 0.7}s`,
+                              opacity: 0.5,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </motion.button>
                 )
               })}
             </div>
 
+            {/* Trunk line connecting layers */}
             {layer.level !== 'root' && (
               <div style={{
-                width: 1, height: 20, background: 'var(--border)',
-                margin: '8px auto 0',
-              }} />
+                width: 2, height: 24, margin: '8px auto 0',
+                background: 'linear-gradient(to bottom, var(--border), rgba(42,42,80,0.3))',
+                borderRadius: 1,
+                position: 'relative',
+              }}>
+                {/* Small node at connection point */}
+                <div style={{
+                  position: 'absolute', top: -2, left: '50%', transform: 'translateX(-50%)',
+                  width: 4, height: 4, borderRadius: '50%',
+                  background: 'var(--border)',
+                }} />
+                <div style={{
+                  position: 'absolute', bottom: -2, left: '50%', transform: 'translateX(-50%)',
+                  width: 4, height: 4, borderRadius: '50%',
+                  background: 'var(--border)',
+                }} />
+              </div>
             )}
           </div>
         ))}
@@ -397,6 +440,9 @@ function ExercisePanel({ topic, onClose, onComplete }: {
     setShowResult(true)
     if (selectedAnswer.toLowerCase().trim() === current.answer.toLowerCase().trim()) {
       setCorrectCount(c => c + 1)
+      soundCorrect()
+    } else {
+      soundWrong()
     }
   }, [selectedAnswer, current.answer])
 
@@ -449,11 +495,16 @@ function ExercisePanel({ topic, onClose, onComplete }: {
       </div>
 
       <div style={{
-        display: 'inline-block', background: 'var(--surface-2)',
-        borderRadius: 6, padding: '3px 8px', fontSize: 10,
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        background: 'var(--surface-2)',
+        borderRadius: 6, padding: '4px 10px', fontSize: 10,
         color: 'var(--text-dim)', marginBottom: 12,
         textTransform: 'uppercase', letterSpacing: '0.05em',
       }}>
+        <span style={{ fontSize: 13 }}>
+          {current.type === 'fill-blank' ? '\u270D\uFE0F' :
+           current.type === 'reorder' ? '\uD83D\uDD00' : '\uD83D\uDD0D'}
+        </span>
         {current.type === 'fill-blank' ? 'Fill in the blank' :
          current.type === 'reorder' ? 'Reorder the words' : 'Find the error'}
       </div>

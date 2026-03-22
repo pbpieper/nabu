@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNabu } from '@/core/context/NabuContext'
 import NavBar from '@/components/atoms/NavBar'
 import { lookupWord } from '@/core/lib/miniDict'
+import { isRTL } from '@/core/lib/rtl'
+import { soundWordLearned } from '@/core/lib/sounds'
 import type { LibraryItem } from '@/core/types'
 
 /* ============================================================
@@ -144,12 +146,13 @@ function ShelfView({ library, onOpen, onAdd }: {
           borderRadius: 16, padding: 20, marginBottom: 20,
           position: 'relative', overflow: 'hidden',
         }}>
-          {/* Lamp glow */}
+          {/* Lamp glow — warm animated */}
           <div style={{
-            position: 'absolute', top: -30, right: 20,
-            width: 80, height: 80, borderRadius: '50%',
-            background: 'radial-gradient(circle, rgba(255,183,77,0.2), transparent)',
+            position: 'absolute', top: -40, right: 10,
+            width: 120, height: 120, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,183,77,0.25), rgba(255,183,77,0.08) 50%, transparent 70%)',
             pointerEvents: 'none',
+            animation: 'warmGlow 4s ease-in-out infinite',
           }} />
 
           {recent ? (
@@ -178,13 +181,29 @@ function ShelfView({ library, onOpen, onAdd }: {
               </div>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '20px 0', position: 'relative', zIndex: 1 }}>
-              <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.5 }}>{'\uD83D\uDCA1'}</div>
-              <div style={{ fontSize: 14, color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                Your library awaits.
+            <div style={{ textAlign: 'center', padding: '24px 12px', position: 'relative', zIndex: 1 }}>
+              <div style={{ fontSize: 36, marginBottom: 10, opacity: 0.6 }}>{'\uD83D\uDCA1'}</div>
+              <div style={{ fontSize: 16, color: 'var(--text-muted)', lineHeight: 1.6, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                Your library awaits its first treasure.
               </div>
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 4 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: 6, lineHeight: 1.6 }}>
                 Add a song, poem, or article to begin.
+              </div>
+              <div style={{
+                display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center', marginTop: 12,
+              }}>
+                {[
+                  { icon: '\uD83C\uDFB5', label: 'Song lyrics' },
+                  { icon: '\uD83D\uDCDC', label: 'A poem' },
+                  { icon: '\uD83D\uDCF0', label: 'News article' },
+                ].map(s => (
+                  <span key={s.label} style={{
+                    background: 'rgba(212,160,88,0.08)', border: '1px solid rgba(212,160,88,0.2)',
+                    borderRadius: 8, padding: '4px 10px', fontSize: 11, color: 'rgba(212,160,88,0.7)',
+                  }}>
+                    {s.icon} {s.label}
+                  </span>
+                ))}
               </div>
             </div>
           )}
@@ -209,9 +228,10 @@ function ShelfView({ library, onOpen, onAdd }: {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileHover={{ scale: 1.04, y: -3, rotateY: -5 }}
                   whileTap={{ scale: 0.96 }}
                   onClick={() => onOpen(item)}
+                  className="book-tilt"
                   style={{
                     background: 'rgba(255,255,255,0.02)',
                     border: '1px solid var(--border)',
@@ -221,7 +241,8 @@ function ShelfView({ library, onOpen, onAdd }: {
                     cursor: 'pointer',
                     display: 'flex', flexDirection: 'column',
                     gap: 4, textAlign: 'left',
-                    transition: 'all 0.15s',
+                    transformStyle: 'preserve-3d',
+                    perspective: '600px',
                   }}
                 >
                   <span style={{ fontSize: 18 }}>{meta.icon}</span>
@@ -435,6 +456,10 @@ function ReaderView({ item, onBack }: {
   const [addedWords, setAddedWords] = useState<Set<string>>(new Set())
   const [hiddenLines, setHiddenLines] = useState<Set<number>>(new Set())
   const [filledBlanks, setFilledBlanks] = useState<Record<number, string>>({})
+  const [activeLine, setActiveLine] = useState(0)
+  const [karaokeMode, setKaraokeMode] = useState(false)
+  const rtl = isRTL(targetLang)
+  const textDir = rtl ? 'rtl' as const : 'ltr' as const
 
   const knownSet = useMemo(() => new Set(words.map(w => w.lemma.toLowerCase())), [words])
   const lines = useMemo(() => item.content.split('\n').filter(l => l.trim()), [item.content])
@@ -455,6 +480,16 @@ function ReaderView({ item, onBack }: {
     })
     return result
   }, [lines])
+
+  const speakLine = useCallback((text: string) => {
+    if ('speechSynthesis' in window) {
+      speechSynthesis.cancel()
+      const utter = new SpeechSynthesisUtterance(text)
+      utter.lang = targetLang
+      utter.rate = 0.85
+      speechSynthesis.speak(utter)
+    }
+  }, [targetLang])
 
   const handleWordClick = useCallback((token: { word: string; raw: string }) => {
     setSelectedToken(token)
@@ -483,6 +518,7 @@ function ReaderView({ item, onBack }: {
     })
     addXP(5)
     setAddedWords(prev => new Set(prev).add(selectedToken.word))
+    soundWordLearned()
     setSelectedToken(null)
   }, [selectedToken, customTranslation, nativeLang, targetLang, addWord, addXP, item.id])
 
@@ -550,6 +586,7 @@ function ReaderView({ item, onBack }: {
               color: tab === t ? '#d4a058' : 'var(--text-dim)',
               fontSize: 12, fontWeight: 600,
               cursor: 'pointer', textTransform: 'capitalize',
+              minHeight: 44,
             }}
           >
             {t === 'fill' ? 'Fill-in' : t}
@@ -557,17 +594,106 @@ function ReaderView({ item, onBack }: {
         ))}
       </div>
 
+      {/* Karaoke toggle for read mode */}
+      {tab === 'read' && (
+        <div style={{
+          display: 'flex', justifyContent: 'flex-end', padding: '6px 16px',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <button
+            onClick={() => { setKaraokeMode(!karaokeMode); setActiveLine(0) }}
+            style={{
+              background: karaokeMode ? 'rgba(212,160,88,0.15)' : 'rgba(255,255,255,0.03)',
+              border: `1px solid ${karaokeMode ? 'rgba(212,160,88,0.4)' : 'var(--border)'}`,
+              borderRadius: 8, padding: '4px 10px', cursor: 'pointer',
+              color: karaokeMode ? '#d4a058' : 'var(--text-dim)',
+              fontSize: 11, fontWeight: 600, minHeight: 32,
+            }}
+          >
+            {'\uD83C\uDFA4'} {karaokeMode ? 'Karaoke ON' : 'Karaoke'}
+          </button>
+        </div>
+      )}
+
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '16px' }}>
         {tab === 'read' && (
-          <ReadTabContent
-            lines={lines}
-            translationLines={translationLines}
-            showTranslation={showTranslation}
-            knownSet={knownSet}
-            addedWords={addedWords}
-            onWordClick={handleWordClick}
-          />
+          karaokeMode ? (
+            <div
+              dir={textDir}
+              onClick={() => setActiveLine(l => Math.min(l + 1, lines.length - 1))}
+              style={{ display: 'flex', flexDirection: 'column', gap: 0, cursor: 'pointer', userSelect: 'none' }}
+            >
+              <p style={{ fontSize: 12, color: 'var(--text-dim)', textAlign: 'center', marginBottom: 10 }}>
+                Tap anywhere to advance
+              </p>
+              {lines.map((line, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: '12px 16px',
+                    minHeight: 48,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                    opacity: i === activeLine ? 1 : i < activeLine ? 0.3 : 0.15,
+                    transition: 'opacity 0.3s ease',
+                    borderRadius: i === activeLine ? 10 : 0,
+                    background: i === activeLine ? 'rgba(212,160,88,0.08)' : 'transparent',
+                  }}
+                >
+                  <span style={{
+                    fontSize: 16, color: 'var(--text)', lineHeight: 1.6, flex: 1,
+                    fontWeight: i === activeLine ? 600 : 400,
+                    textShadow: i === activeLine ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+                    textAlign: textDir === 'rtl' ? 'right' : 'left',
+                  }}>
+                    {line}
+                  </span>
+                  {i === activeLine && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); speakLine(line) }}
+                      style={{
+                        background: 'rgba(212,160,88,0.15)',
+                        border: '1px solid rgba(212,160,88,0.3)',
+                        borderRadius: 8, padding: '6px 10px',
+                        cursor: 'pointer', fontSize: 14,
+                        minWidth: 44, minHeight: 44,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {'\uD83D\uDD0A'}
+                    </button>
+                  )}
+                </div>
+              ))}
+              {activeLine >= lines.length - 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setActiveLine(0) }}
+                  style={{
+                    display: 'block', margin: '16px auto', padding: '10px 24px',
+                    background: 'rgba(212,160,88,0.1)', border: '1px solid rgba(212,160,88,0.3)',
+                    borderRadius: 10, color: '#d4a058', fontSize: 13, fontWeight: 600,
+                    cursor: 'pointer', minHeight: 44,
+                  }}
+                >
+                  Restart from beginning
+                </button>
+              )}
+            </div>
+          ) : (
+            <ReadTabContent
+              lines={lines}
+              translationLines={translationLines}
+              showTranslation={showTranslation}
+              knownSet={knownSet}
+              addedWords={addedWords}
+              onWordClick={handleWordClick}
+              dir={textDir}
+            />
+          )
         )}
 
         {tab === 'memorize' && (
@@ -718,21 +844,22 @@ function ReaderView({ item, onBack }: {
    READ TAB CONTENT
    ============================================================ */
 
-function ReadTabContent({ lines, translationLines, showTranslation, knownSet, addedWords, onWordClick }: {
+function ReadTabContent({ lines, translationLines, showTranslation, knownSet, addedWords, onWordClick, dir }: {
   lines: string[]
   translationLines: string[]
   showTranslation: boolean
   knownSet: Set<string>
   addedWords: Set<string>
   onWordClick: (token: { word: string; raw: string }) => void
+  dir?: 'rtl' | 'ltr'
 }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+    <div dir={dir} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       {lines.map((line, lineIdx) => {
         const tokens = tokenize(line)
         return (
-          <div key={lineIdx} style={{ marginBottom: showTranslation ? 0 : 4 }}>
-            <div style={{ lineHeight: 2, fontSize: 16 }}>
+          <div key={lineIdx} style={{ marginBottom: showTranslation ? 0 : 4, minHeight: 48, display: 'flex', alignItems: 'center' }}>
+            <div style={{ lineHeight: 2, fontSize: 16, flex: 1 }}>
               {tokens.map((token, i) => {
                 if (token.isPunct) {
                   return <span key={i} style={{ color: 'var(--text-muted)' }}>{token.raw}</span>

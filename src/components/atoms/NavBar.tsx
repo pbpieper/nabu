@@ -45,6 +45,16 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
+/* SVG lock icon — small and elegant */
+function LockIcon() {
+  return (
+    <svg width="7" height="9" viewBox="0 0 7 9" fill="none" style={{ opacity: 0.5 }}>
+      <rect x="0.5" y="3.5" width="6" height="5" rx="1" stroke="currentColor" strokeWidth="0.8"/>
+      <path d="M1.8 3.5V2.2a1.7 1.7 0 113.4 0v1.3" stroke="currentColor" strokeWidth="0.8" strokeLinecap="round"/>
+    </svg>
+  )
+}
+
 export default function NavBar() {
   const { view, setView, tower } = useNabu()
 
@@ -74,7 +84,7 @@ export default function NavBar() {
         return (
           <motion.button
             key={item.view}
-            whileTap={!isLocked ? { scale: 0.9 } : undefined}
+            whileTap={!isLocked ? { scale: 0.85 } : undefined}
             onClick={() => !isLocked && setView(item.view)}
             style={{
               background: 'none',
@@ -84,63 +94,69 @@ export default function NavBar() {
               flexDirection: 'column',
               alignItems: 'center',
               gap: 2,
-              padding: '6px 12px',
+              padding: '8px 14px',
               borderRadius: 12,
               position: 'relative',
               opacity: isLocked ? 0.3 : 1,
               minWidth: 52,
-              minHeight: 44,
+              minHeight: 48,
               justifyContent: 'center',
             }}
           >
-            {/* Active glow indicator */}
+            {/* Active glow indicator — shared layout animation */}
             {isActive && (
               <motion.div
                 layoutId="navGlow"
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  background: `radial-gradient(ellipse at center, ${item.glow.replace('0.5', '0.1')}, transparent 70%)`,
+                  background: `radial-gradient(ellipse at center, ${item.glow.replace('0.5', '0.12')}, transparent 70%)`,
                   borderRadius: 12,
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               />
             )}
 
-            <span style={{
-              fontSize: 22,
-              filter: isActive ? `drop-shadow(0 0 6px ${item.glow})` : isLocked ? 'grayscale(1)' : 'none',
-              position: 'relative',
-              zIndex: 1,
-              lineHeight: 1,
-            }}>
+            {/* Icon with scale animation on active */}
+            <motion.span
+              animate={isActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
+              transition={isActive ? { duration: 0.3 } : undefined}
+              style={{
+                fontSize: 22,
+                filter: isActive ? `drop-shadow(0 0 8px ${item.glow})` : isLocked ? 'grayscale(1)' : 'none',
+                position: 'relative',
+                zIndex: 1,
+                lineHeight: 1,
+              }}
+            >
               {item.icon}
-            </span>
+            </motion.span>
 
-            {/* Lock indicator for locked items */}
+            {/* Lock indicator — elegant SVG instead of emoji */}
             {isLocked && (
               <span style={{
                 position: 'absolute',
-                top: 4,
-                right: 6,
-                fontSize: 8,
-                opacity: 0.6,
+                top: 5,
+                right: 7,
+                color: 'var(--text-dim)',
               }}>
-                {'\uD83D\uDD12'}
+                <LockIcon />
               </span>
             )}
 
-            {/* Active dot */}
+            {/* Glowing underline that slides between tabs */}
             {isActive && (
               <motion.div
-                layoutId="navDot"
+                layoutId="navUnderline"
                 style={{
-                  width: 4,
-                  height: 4,
-                  borderRadius: '50%',
+                  position: 'absolute',
+                  bottom: 4,
+                  left: '20%',
+                  right: '20%',
+                  height: 2,
+                  borderRadius: 1,
                   background: item.color,
-                  boxShadow: `0 0 6px ${item.glow}`,
-                  position: 'relative',
+                  boxShadow: `0 0 8px ${item.glow}, 0 0 16px ${item.glow.replace('0.5', '0.2')}`,
                   zIndex: 1,
                 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}

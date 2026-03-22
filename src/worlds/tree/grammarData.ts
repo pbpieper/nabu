@@ -22,7 +22,7 @@ const SPANISH_TREE: GrammarTopic[] = [
   // ROOTS
   {
     id: 'es-alphabet', name: 'Alphabet & Pronunciation', level: 'root', language: 'es',
-    description: 'Spanish uses the Latin alphabet with one extra letter: n with tilde. Vowels are always pronounced the same way, making Spanish very phonetic.',
+    description: 'Spanish uses the Latin alphabet plus the letter \u00f1 (e\u00f1e). Spanish has five pure vowels (a, e, i, o, u), each with a single consistent pronunciation, making it highly phonetic.',
     examples: [
       'A E I O U - always the same sound',
       'LL sounds like "y" in "yes" (calle = ka-ye)',
@@ -65,11 +65,11 @@ const SPANISH_TREE: GrammarTopic[] = [
   // TRUNK
   {
     id: 'es-present-tense', name: 'Present Tense', level: 'trunk', parentId: 'es-sentence-structure', language: 'es',
-    description: 'Regular verbs follow patterns based on their ending: -ar, -er, or -ir. Each has six conjugation forms for the different persons.',
+    description: 'Regular verbs conjugate according to three classes based on infinitive ending: -ar, -er, or -ir. Each conjugation has six forms (three singular, three plural) agreeing with the subject in person and number.',
     examples: [
-      'Hablar: hablo, hablas, habla, hablamos, hablais, hablan',
-      'Comer: como, comes, come, comemos, comeis, comen',
-      'Vivir: vivo, vives, vive, vivimos, vivis, viven',
+      'Hablar: hablo, hablas, habla, hablamos, habl\u00e1is, hablan',
+      'Comer: como, comes, come, comemos, com\u00e9is, comen',
+      'Vivir: vivo, vives, vive, vivimos, viv\u00eds, viven',
     ],
     exercises: [
       { type: 'fill-blank', prompt: 'Yo ___ espanol. (hablar)', options: ['hablo', 'hablas', 'habla'], answer: 'hablo', explanation: 'First person singular of -ar verbs ends in -o.' },
@@ -81,12 +81,12 @@ const SPANISH_TREE: GrammarTopic[] = [
     id: 'es-past-tense', name: 'Past Tense (Preterite)', level: 'trunk', parentId: 'es-present-tense', language: 'es',
     description: 'The preterite is used for completed actions in the past. Regular -ar verbs get different endings than -er/-ir verbs.',
     examples: [
-      'Yo hable con Maria ayer. (I spoke with Maria yesterday.)',
-      'El comio una manzana. (He ate an apple.)',
+      'Yo habl\u00e9 con Mar\u00eda ayer. (I spoke with Maria yesterday.)',
+      '\u00c9l comi\u00f3 una manzana. (He ate an apple.)',
       'Ellos vivieron en Madrid. (They lived in Madrid.)',
     ],
     exercises: [
-      { type: 'fill-blank', prompt: 'Ayer yo ___ mucho. (trabajar)', options: ['trabaje', 'trabajo', 'trabajare'], answer: 'trabaje', explanation: 'Preterite first person -ar: -e.' },
+      { type: 'fill-blank', prompt: 'Ayer yo ___ mucho. (trabajar)', options: ['trabaj\u00e9', 'trabajo', 'trabajar\u00e9'], answer: 'trabaj\u00e9', explanation: 'Preterite first person -ar: -\u00e9 (with accent).' },
       { type: 'fill-blank', prompt: 'Tu ___ la comida. (comer)', options: ['comiste', 'comes', 'comias'], answer: 'comiste', explanation: 'Preterite second person -er: -iste.' },
       { type: 'reorder', prompt: 'Arrange: ayer / una carta / escribio / ella', answer: 'Ella escribio una carta ayer', explanation: 'She wrote a letter yesterday.' },
     ],
@@ -95,13 +95,13 @@ const SPANISH_TREE: GrammarTopic[] = [
     id: 'es-future-tense', name: 'Future Tense', level: 'trunk', parentId: 'es-past-tense', language: 'es',
     description: 'The simple future is formed by adding endings to the full infinitive. All three verb types use the same endings.',
     examples: [
-      'Yo hablare con el manana. (I will speak with him tomorrow.)',
-      'Tu comeras a las ocho. (You will eat at eight.)',
+      'Yo hablar\u00e9 con \u00e9l ma\u00f1ana. (I will speak with him tomorrow.)',
+      'T\u00fa comer\u00e1s a las ocho. (You will eat at eight.)',
       'Nosotros viviremos en Barcelona. (We will live in Barcelona.)',
     ],
     exercises: [
-      { type: 'fill-blank', prompt: 'Manana yo ___ al parque. (ir)', options: ['ire', 'iba', 'fui'], answer: 'ire', explanation: 'Future of "ir": ire, iras, ira...' },
-      { type: 'fill-blank', prompt: 'Ellos ___ la verdad. (saber)', options: ['sabran', 'saben', 'supieron'], answer: 'sabran', explanation: 'Future of "saber" is irregular: sabr- + endings.' },
+      { type: 'fill-blank', prompt: 'Ma\u00f1ana yo ___ al parque. (ir)', options: ['ir\u00e9', 'iba', 'fui'], answer: 'ir\u00e9', explanation: 'Future of "ir": ir\u00e9, ir\u00e1s, ir\u00e1...' },
+      { type: 'fill-blank', prompt: 'Ellos ___ la verdad. (saber)', options: ['sabr\u00e1n', 'saben', 'supieron'], answer: 'sabr\u00e1n', explanation: 'Future of "saber" is irregular: sabr- + endings.' },
       { type: 'reorder', prompt: 'Arrange: estudiaremos / manana / juntos', answer: 'Manana estudiaremos juntos', explanation: 'Tomorrow we will study together.' },
     ],
   },
@@ -138,14 +138,14 @@ const SPANISH_TREE: GrammarTopic[] = [
     id: 'es-conditional', name: 'Conditional Mood', level: 'branch', parentId: 'es-future-tense', language: 'es',
     description: 'The conditional expresses "would" actions. Used for polite requests and hypothetical situations.',
     examples: [
-      'Me gustaria un cafe. (I would like a coffee.)',
-      'Yo comeria mas si pudiera. (I would eat more if I could.)',
-      'Ellos viajarian a Espana. (They would travel to Spain.)',
+      'Me gustar\u00eda un caf\u00e9. (I would like a coffee.)',
+      'Yo comer\u00eda m\u00e1s si pudiera. (I would eat more if I could.)',
+      'Ellos viajar\u00edan a Espa\u00f1a. (They would travel to Spain.)',
     ],
     exercises: [
-      { type: 'fill-blank', prompt: 'Me ___ viajar a Japon.', options: ['gustaria', 'gusta', 'gusto'], answer: 'gustaria', explanation: 'Conditional of "gustar": gustaria.' },
-      { type: 'fill-blank', prompt: 'Yo ___ si tuviera dinero. (comprar)', options: ['compraria', 'compro', 'comprare'], answer: 'compraria', explanation: 'Conditional: infinitive + -ia ending.' },
-      { type: 'reorder', prompt: 'Arrange: ella / a Paris / iria / con nosotros', answer: 'Ella iria a Paris con nosotros', explanation: 'She would go to Paris with us.' },
+      { type: 'fill-blank', prompt: 'Me ___ viajar a Jap\u00f3n.', options: ['gustar\u00eda', 'gusta', 'gust\u00f3'], answer: 'gustar\u00eda', explanation: 'Conditional of "gustar": gustar\u00eda.' },
+      { type: 'fill-blank', prompt: 'Yo ___ si tuviera dinero. (comprar)', options: ['comprar\u00eda', 'compro', 'comprar\u00e9'], answer: 'comprar\u00eda', explanation: 'Conditional: infinitive + -\u00eda ending.' },
+      { type: 'reorder', prompt: 'Arrange: ella / a Par\u00eds / ir\u00eda / con nosotros', answer: 'Ella ir\u00eda a Par\u00eds con nosotros', explanation: 'She would go to Paris with us.' },
     ],
   },
   {
@@ -154,10 +154,10 @@ const SPANISH_TREE: GrammarTopic[] = [
     examples: [
       'Quiero que vengas. (I want you to come.)',
       'Es posible que llueva. (It is possible it will rain.)',
-      'Espero que estes bien. (I hope you are well.)',
+      'Espero que est\u00e9s bien. (I hope you are well.)',
     ],
     exercises: [
-      { type: 'fill-blank', prompt: 'Quiero que tu ___ aqui. (estar)', options: ['estes', 'estas', 'estabas'], answer: 'estes', explanation: 'Subjunctive of "estar" after "quiero que".' },
+      { type: 'fill-blank', prompt: 'Quiero que t\u00fa ___ aqu\u00ed. (estar)', options: ['est\u00e9s', 'est\u00e1s', 'estabas'], answer: 'est\u00e9s', explanation: 'Subjunctive of "estar" after "quiero que".' },
       { type: 'fill-blank', prompt: 'Es importante que ___ la verdad. (decir)', options: ['digas', 'dices', 'diras'], answer: 'digas', explanation: '"Es importante que" triggers subjunctive.' },
       { type: 'find-error', prompt: '"Espero que tienes tiempo."', answer: 'tienes', explanation: 'After "espero que", use subjunctive: "tengas".' },
     ],

@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNabu } from '@/core/context/NabuContext'
 import type { NabuWord } from '@/core/types'
+import { soundCorrect, soundWrong, soundXPGained } from '@/core/lib/sounds'
 
 type ExerciseMode = 'flash' | 'match' | 'audio'
 
@@ -27,6 +28,8 @@ export default function GalaxyExercise({ words, onClose, title }: GalaxyExercise
     setScore(s => s + 1)
     setTotal(t => t + 1)
     setShowResult('correct')
+    soundCorrect()
+    setTimeout(() => soundXPGained(), 200)
     addXP(5)
     if (currentWord) {
       const newStatus = currentWord.status === 'unknown' ? 'seen'
@@ -42,16 +45,17 @@ export default function GalaxyExercise({ words, onClose, title }: GalaxyExercise
     setTimeout(() => {
       setShowResult(null)
       setCurrentIndex(i => i + 1)
-    }, 800)
+    }, 600) // Snappier — 600ms
   }, [currentWord, updateWord, addXP])
 
   const handleWrong = useCallback(() => {
     setTotal(t => t + 1)
     setShowResult('wrong')
+    soundWrong()
     setTimeout(() => {
       setShowResult(null)
       setCurrentIndex(i => i + 1)
-    }, 1200)
+    }, 900) // Snappier — 900ms
   }, [])
 
   if (exerciseWords.length === 0) {
@@ -202,33 +206,52 @@ function FlashExercise({ word, onCorrect, onWrong, showResult }: {
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.2 }}
       style={{ textAlign: 'center' }}
     >
-      <div style={{
-        fontSize: 32, fontWeight: 700, color: 'var(--text)', marginBottom: 8, letterSpacing: '0.02em',
-      }}>{word.lemma}</div>
+      <motion.div
+        animate={
+          showResult === 'correct'
+            ? { scale: [1, 1.15, 1], color: ['var(--text)', '#10b981', 'var(--text)'] }
+            : showResult === 'wrong'
+              ? { x: [0, -6, 6, -4, 4, 0] }
+              : {}
+        }
+        transition={{ duration: 0.4 }}
+        style={{
+          fontSize: 32, fontWeight: 700, color: 'var(--text)', marginBottom: 8, letterSpacing: '0.02em',
+        }}
+      >{word.lemma}</motion.div>
       {word.pronunciation && (
         <p style={{ fontSize: 13, color: 'var(--text-dim)', marginBottom: 20 }}>{word.pronunciation}</p>
       )}
       <form onSubmit={handleSubmit}>
-        <input
+        <motion.input
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
           placeholder="Type translation..."
           disabled={showResult !== null}
+          animate={
+            showResult === 'correct'
+              ? { borderColor: 'var(--mastered)', boxShadow: '0 0 20px rgba(16,185,129,0.3)' }
+              : showResult === 'wrong'
+                ? { borderColor: 'var(--ember)', boxShadow: '0 0 20px rgba(239,68,68,0.3)' }
+                : { borderColor: 'var(--border)', boxShadow: '0 0 0px transparent' }
+          }
+          transition={{ duration: 0.2 }}
           style={{
             width: '100%', maxWidth: 300, padding: '12px 16px', borderRadius: 12,
-            border: `2px solid ${showResult === 'correct' ? 'var(--mastered)' : showResult === 'wrong' ? 'var(--ember)' : 'var(--border)'}`,
+            border: '2px solid var(--border)',
             background: 'var(--surface)', color: 'var(--text)', fontSize: 16, outline: 'none',
-            textAlign: 'center', transition: 'border-color 0.2s',
+            textAlign: 'center',
           }}
         />
       </form>
       {revealed && (
         <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
           style={{ marginTop: 12, fontSize: 14, color: 'var(--ember)' }}
         >Correct answer: <strong>{word.translation}</strong></motion.p>
       )}
@@ -267,6 +290,7 @@ function MatchExercise({ word, allWords, onCorrect, onWrong, showResult }: {
       initial={{ opacity: 0, x: 30 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }}
+      transition={{ duration: 0.2 }}
       style={{ textAlign: 'center' }}
     >
       <div style={{
@@ -281,16 +305,25 @@ function MatchExercise({ word, allWords, onCorrect, onWrong, showResult }: {
           if (showResult && isCorrectAnswer) { bg = 'rgba(16,185,129,0.15)'; borderColor = 'var(--mastered)' }
           else if (showResult && isSelected && !isCorrectAnswer) { bg = 'rgba(239,68,68,0.15)'; borderColor = 'var(--ember)' }
           return (
-            <button
+            <motion.button
               key={opt}
               onClick={() => handlePick(opt)}
               disabled={showResult !== null}
+              animate={
+                showResult && isCorrectAnswer
+                  ? { scale: [1, 1.05, 1], transition: { duration: 0.3 } }
+                  : showResult && isSelected && !isCorrectAnswer
+                    ? { x: [0, -4, 4, -3, 3, 0], transition: { duration: 0.35 } }
+                    : {}
+              }
+              whileHover={!showResult ? { scale: 1.03, y: -1 } : undefined}
+              whileTap={!showResult ? { scale: 0.97 } : undefined}
               style={{
                 padding: '14px 16px', borderRadius: 12, border: `2px solid ${borderColor}`,
                 background: bg, color: 'var(--text)', fontSize: 15, cursor: 'pointer',
-                transition: 'all 0.2s', fontWeight: isSelected ? 600 : 400,
+                transition: 'all 0.15s', fontWeight: isSelected ? 600 : 400,
               }}
-            >{opt}</button>
+            >{opt}</motion.button>
           )
         })}
       </div>

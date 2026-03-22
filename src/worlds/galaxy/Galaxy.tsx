@@ -6,6 +6,7 @@ import { PLANETS, ORBIT_CONFIG, STATUS_COLORS, getPlanetForWord } from './planet
 import type { PlanetDef } from './planets'
 import GalaxyExercise from './GalaxyExercise'
 import NavBar from '@/components/atoms/NavBar'
+import { isRTL } from '@/core/lib/rtl'
 
 type StatusFilter = 'all' | NabuWord['status']
 
@@ -14,7 +15,8 @@ type StatusFilter = 'all' | NabuWord['status']
 // ═══════════════════════════════════════════════════
 
 export default function Galaxy() {
-  const { words, setView, updateWord } = useNabu()
+  const { words, setView, updateWord, profile } = useNabu()
+  void isRTL(profile?.targetLanguage ?? 'es') // reserved for RTL layout
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerSize, setContainerSize] = useState(600)
 
@@ -220,10 +222,11 @@ export default function Galaxy() {
           paddingBottom: 56, /* space for NavBar */
         }}
       >
-        <div style={{
+        <div className="orbit-drift" style={{
           position: 'relative',
           width: containerSize, height: containerSize,
-        }}>
+          '--drift-duration': '300s',
+        } as React.CSSProperties}>
           {/* Orbit rings */}
           {([1, 2, 3, 4, 5] as const).map(orbit => {
             const config = ORBIT_CONFIG[orbit]
@@ -280,6 +283,27 @@ export default function Galaxy() {
         </div>
       </div>
 
+      {/* ── Empty state ──────────────────────── */}
+      {words.length < 5 && (
+        <div style={{
+          position: 'absolute', bottom: 120, left: 0, right: 0, zIndex: 10,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: '0 32px', textAlign: 'center',
+        }}>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            style={{
+              color: 'var(--text-muted)', fontSize: 14, lineHeight: 1.6,
+              maxWidth: 280, marginBottom: 12,
+              textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+            }}
+          >
+            Your galaxy is young. Read some text or complete quests to discover more words.
+          </motion.p>
+        </div>
+      )}
+
       {/* ── Bottom: Add Words button ─────────── */}
       <div style={{
         position: 'absolute', bottom: 68, left: 0, right: 0, zIndex: 10,
@@ -293,6 +317,7 @@ export default function Galaxy() {
             color: 'white', fontWeight: 700, fontSize: 14,
             boxShadow: '0 4px 30px rgba(168,85,247,0.3)',
             display: 'flex', alignItems: 'center', gap: 8,
+            minHeight: 44,
           }}
         >
           <span style={{ fontSize: 18 }}>+</span> Add Words
@@ -334,13 +359,10 @@ export default function Galaxy() {
         )}
       </AnimatePresence>
 
-      {/* Tooltip hover CSS */}
+      {/* Tooltip hover CSS + orbit drift */}
       <style>{`
         .galaxy-star:hover .star-tooltip { opacity: 1 !important; }
-        @keyframes pulse-glow {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.15); opacity: 0.7; }
-        }
+        .orbit-drift { animation: orbitDrift var(--drift-duration, 200s) linear infinite; transform-origin: center; }
       `}</style>
 
       {/* NavBar */}
@@ -370,12 +392,28 @@ function CentralSun({ x, y, wordCount, masteredCount }: {
       width: sunSize, height: sunSize,
       zIndex: 5,
     }}>
-      {/* Outer glow */}
+      {/* Solar flare rays — rotating conic gradient */}
+      <div style={{
+        position: 'absolute', inset: -30,
+        borderRadius: '50%',
+        background: 'conic-gradient(from 0deg, rgba(255,215,0,0.08), transparent 12%, rgba(255,215,0,0.06), transparent 25%, rgba(255,215,0,0.1), transparent 37%, rgba(255,215,0,0.05), transparent 50%, rgba(255,215,0,0.08), transparent 62%, rgba(255,215,0,0.06), transparent 75%, rgba(255,215,0,0.09), transparent 87%, rgba(255,215,0,0.07))',
+        animation: 'solarFlare 8s linear infinite',
+        pointerEvents: 'none',
+      }} />
+      <div style={{
+        position: 'absolute', inset: -24,
+        borderRadius: '50%',
+        background: 'conic-gradient(from 45deg, transparent, rgba(255,180,0,0.06) 15%, transparent 30%, rgba(255,200,0,0.08) 45%, transparent 60%, rgba(255,160,0,0.05) 75%, transparent)',
+        animation: 'solarFlare2 6s linear infinite reverse',
+        pointerEvents: 'none',
+      }} />
+      {/* Outer glow — breathing */}
       <div style={{
         position: 'absolute', inset: -20,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%)',
-        animation: 'pulse-glow 3s ease-in-out infinite',
+        background: 'radial-gradient(circle, rgba(255,215,0,0.2) 0%, rgba(255,215,0,0.05) 50%, transparent 70%)',
+        animation: 'breathe 3s ease-in-out infinite',
+        pointerEvents: 'none',
       }} />
       {/* Core */}
       <div style={{
@@ -383,6 +421,7 @@ function CentralSun({ x, y, wordCount, masteredCount }: {
         background: 'radial-gradient(circle at 35% 35%, #ffeaa0, #ffc800, #e6a000)',
         boxShadow: '0 0 40px rgba(255,215,0,0.4), 0 0 80px rgba(255,215,0,0.15), inset 0 0 20px rgba(255,255,255,0.2)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        animation: 'solarPulse 4s ease-in-out infinite',
       }}>
         <span style={{ fontSize: 16, fontWeight: 800, color: '#3a2400', lineHeight: 1 }}>
           {wordCount}
@@ -452,14 +491,16 @@ function Star({ word, x, y, selected, onClick }: {
       {/* Tooltip */}
       <div
         className="star-tooltip"
+        dir={word.langTo && isRTL(word.langTo) ? 'rtl' : 'ltr'}
         style={{
           position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
           marginBottom: 10, padding: '6px 10px', borderRadius: 8,
           background: 'var(--surface)', border: '1px solid var(--border)',
           whiteSpace: 'nowrap', pointerEvents: 'none',
           opacity: 0, transition: 'opacity 0.15s',
-          fontSize: 11, lineHeight: 1.4, zIndex: 50,
+          fontSize: 12, lineHeight: 1.4, zIndex: 50,
           boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+          textShadow: '0 1px 2px rgba(0,0,0,0.4)',
         }}
       >
         <div style={{ fontWeight: 700, color: 'var(--text)' }}>{word.lemma}</div>
@@ -472,7 +513,7 @@ function Star({ word, x, y, selected, onClick }: {
   )
 }
 
-// ── Planet ───────────────────────────────────────
+// ── Planet — with tooltip showing name + word count ──
 function Planet({ planet, x, y, count, masteryPct, active, onClick }: {
   planet: PlanetDef; x: number; y: number; count: number; masteryPct: number
   active: boolean; onClick: () => void
@@ -480,6 +521,7 @@ function Planet({ planet, x, y, count, masteryPct, active, onClick }: {
   const baseSize = 28 + Math.min(count * 0.4, 20)
   return (
     <motion.div
+      className="galaxy-star"
       onClick={(e) => { e.stopPropagation(); onClick() }}
       whileHover={{ scale: 1.15 }}
       whileTap={{ scale: 0.95 }}
@@ -508,6 +550,23 @@ function Planet({ planet, x, y, count, masteryPct, active, onClick }: {
         borderRadius: 99, padding: '1px 5px', fontSize: 9,
         color: 'var(--text-muted)', fontWeight: 600,
       }}>{count}</div>
+      {/* Planet tooltip */}
+      <div
+        className="star-tooltip"
+        style={{
+          position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
+          marginBottom: 10, padding: '6px 12px', borderRadius: 8,
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          whiteSpace: 'nowrap', pointerEvents: 'none',
+          opacity: 0, transition: 'opacity 0.15s',
+          fontSize: 11, lineHeight: 1.4, zIndex: 50,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+          textAlign: 'center',
+        }}
+      >
+        <div style={{ fontWeight: 700, color: planet.color }}>{planet.name}</div>
+        <div style={{ color: 'var(--text-muted)', fontSize: 10 }}>{count} words</div>
+      </div>
     </motion.div>
   )
 }
