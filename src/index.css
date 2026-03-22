@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+:root {
+  --void: #07070d;
+  --deep: #0e0e1a;
+  --surface: #161625;
+  --surface-2: #1e1e32;
+  --surface-3: #282845;
+  --border: #2a2a50;
+  --text: #e4e4f0;
+  --text-muted: #8888aa;
+  --text-dim: #555577;
+  --star: #ffd700;
+  --nova: #ff6b35;
+  --nebula: #a855f7;
+  --cosmos: #3b82f6;
+  --aurora: #22d3ee;
+  --life: #10b981;
+  --ember: #ef4444;
+  --xp: #ffd700;
+  --mastered: #10b981;
+  --learning: #f59e0b;
+  --new-word: #6366f1;
+  --unknown: #ef4444;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--void);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root { min-height: 100vh; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::selection { background: var(--nebula); color: white; }
+
+@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes twinkle { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes orbit { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes grow { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
