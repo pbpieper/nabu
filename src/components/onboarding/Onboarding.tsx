@@ -5,31 +5,31 @@ import type { UserProfile } from '@/core/types'
 import { getStarterWords } from '@/core/lib/starterWords'
 
 const LANGUAGES = [
-  { code: 'es', name: 'Spanish', native: 'Espa\u00f1ol', symbol: '\u2726' },
-  { code: 'fr', name: 'French', native: 'Fran\u00e7ais', symbol: '\u2727' },
-  { code: 'de', name: 'German', native: 'Deutsch', symbol: '\u2736' },
-  { code: 'ar', name: 'Arabic', native: '\u0627\u0644\u0639\u0631\u0628\u064A\u0629', symbol: '\u2734' },
-  { code: 'ja', name: 'Japanese', native: '\u65E5\u672C\u8A9E', symbol: '\u2733' },
-  { code: 'ko', name: 'Korean', native: '\uD55C\uAD6D\uC5B4', symbol: '\u2721' },
-  { code: 'zh', name: 'Chinese', native: '\u4E2D\u6587', symbol: '\u2742' },
-  { code: 'it', name: 'Italian', native: 'Italiano', symbol: '\u2735' },
-  { code: 'pt', name: 'Portuguese', native: 'Portugu\u00eas', symbol: '\u2737' },
-  { code: 'ru', name: 'Russian', native: '\u0420\u0443\u0441\u0441\u043A\u0438\u0439', symbol: '\u2738' },
-  { code: 'tr', name: 'Turkish', native: 'T\u00fcrk\u00e7e', symbol: '\u2739' },
-  { code: 'nl', name: 'Dutch', native: 'Nederlands', symbol: '\u273A' },
+  { code: 'es', name: 'Spanish', native: 'Español', symbol: '⭐' },
+  { code: 'fr', name: 'French', native: 'Français', symbol: '✨' },
+  { code: 'de', name: 'German', native: 'Deutsch', symbol: '💫' },
+  { code: 'ar', name: 'Arabic', native: 'العربية', symbol: '🌟' },
+  { code: 'ja', name: 'Japanese', native: '日本語', symbol: '🔮' },
+  { code: 'ko', name: 'Korean', native: '한국어', symbol: '💎' },
+  { code: 'zh', name: 'Chinese', native: '中文', symbol: '🏮' },
+  { code: 'it', name: 'Italian', native: 'Italiano', symbol: '🌙' },
+  { code: 'pt', name: 'Portuguese', native: 'Português', symbol: '🌊' },
+  { code: 'ru', name: 'Russian', native: 'Русский', symbol: '❄️' },
+  { code: 'tr', name: 'Turkish', native: 'Türkçe', symbol: '🌺' },
+  { code: 'nl', name: 'Dutch', native: 'Nederlands', symbol: '🌷' },
 ] as const
 
 const FIRST_WORDS: Record<string, { word: string; translation: string; pronunciation?: string }> = {
   es: { word: 'Hola', translation: 'Hello' },
   fr: { word: 'Bonjour', translation: 'Hello' },
   de: { word: 'Hallo', translation: 'Hello' },
-  ar: { word: '\u0645\u0631\u062D\u0628\u0627', translation: 'Hello', pronunciation: 'marhaba' },
-  ja: { word: '\u3053\u3093\u306B\u3061\u306F', translation: 'Hello', pronunciation: 'konnichiwa' },
-  ko: { word: '\uC548\uB155\uD558\uC138\uC694', translation: 'Hello', pronunciation: 'annyeonghaseyo' },
-  zh: { word: '\u4F60\u597D', translation: 'Hello', pronunciation: 'ni hao' },
+  ar: { word: 'مرحبا', translation: 'Hello', pronunciation: 'marhaba' },
+  ja: { word: 'こんにちは', translation: 'Hello', pronunciation: 'konnichiwa' },
+  ko: { word: '안녕하세요', translation: 'Hello', pronunciation: 'annyeonghaseyo' },
+  zh: { word: '你好', translation: 'Hello', pronunciation: 'ni hao' },
   it: { word: 'Ciao', translation: 'Hello' },
   pt: { word: 'Ola', translation: 'Hello' },
-  ru: { word: '\u041F\u0440\u0438\u0432\u0435\u0442', translation: 'Hello', pronunciation: 'privet' },
+  ru: { word: 'Привет', translation: 'Hello', pronunciation: 'privet' },
   tr: { word: 'Merhaba', translation: 'Hello' },
   nl: { word: 'Hallo', translation: 'Hello' },
 }
@@ -215,7 +215,7 @@ function WelcomeStep({ onSelect, selected }: {
           filter: 'drop-shadow(0 0 20px var(--star))',
         }}
       >
-        \u2726
+        ✦
       </motion.div>
 
       <motion.p
@@ -321,7 +321,7 @@ function WelcomeStep({ onSelect, selected }: {
           transition={{ duration: 1.2, repeat: Infinity }}
           style={{ fontSize: 16 }}
         >
-          {'\u261D\uFE0F'}
+          {'☝️'}
         </motion.span>
         Tap a language to pick it!
       </motion.p>
@@ -349,7 +349,7 @@ function NativeStep({ onSelect, selected, targetLang }: {
         transition={{ duration: 0.5 }}
         style={{ fontSize: 36, marginBottom: 24, opacity: 0.6 }}
       >
-        \u2728
+        ✨
       </motion.div>
 
       <motion.p
@@ -358,7 +358,7 @@ function NativeStep({ onSelect, selected, targetLang }: {
         transition={{ delay: 0.2, duration: 0.6 }}
         style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 4 }}
       >
-        {targetName} \u2014 beautiful choice.
+        {targetName} — beautiful choice.
       </motion.p>
       <motion.p
         initial={{ opacity: 0 }}

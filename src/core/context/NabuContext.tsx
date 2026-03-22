@@ -68,7 +68,7 @@ const DEFAULT_TOWER: TowerState = {
   level: 1, xp: 0, xpToNext: 50,
   streak: 0, streakFreezes: 1,
   wordsKnown: 0, totalEncounters: 0,
-  unlockedFeatures: ['tower', 'reader'],
+  unlockedFeatures: ['tower', 'reader', 'galaxy', 'library', 'tree', 'exercises'],
 }
 
 // XP thresholds per level
